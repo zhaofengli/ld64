@@ -477,10 +477,10 @@ static const struct _hash_info _known_hash_types[] = {
     { 0, NULL },
     { CS_SHA1_LEN, "SHA-1" }, // CS_HASHTYPE_SHA1
     { CS_SHA256_LEN, "SHA-256" }, // CS_HASHTYPE_SHA256
-    { CS_HASHTYPE_SHA256_TRUNCATED, "SHA-256" }, // CS_HASHTYPE_SHA256_TRUNCATED
-    { CS_SHA384_LEN, "SHA-384" }, // CS_HASHTYPE_SHA384
+    //{ CS_SHA256_TRUNCATED_LEN, NULL }, // CS_HASHTYPE_SHA256_TRUNCATED, unspported
+    //{ CS_SHA384_LEN, "SHA-384" }, // CS_HASHTYPE_SHA384, unsupported
 };
-static const size_t _max_known_hash_len = CS_SHA384_LEN;
+static const size_t _max_known_hash_len = CS_SHA256_LEN;
 static const int _known_hash_types_count = sizeof(_known_hash_types)/sizeof(_known_hash_types[0]);
 
 static struct _hash_info const *
