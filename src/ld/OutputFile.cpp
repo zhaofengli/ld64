@@ -77,13 +77,13 @@ uint32_t sAdrpNoped = 0;
 uint32_t sAdrpNotNoped = 0;
 
 static void
-EVP_MD_cleanup(EVP_MD** digest) {
+cleanup_EVP_MD(EVP_MD** digest) {
 	EVP_MD_free(*digest);
 	*digest = nullptr;
 }
 
 static void
-EVP_MD_CTX_cleanup(EVP_MD_CTX** context) {
+cleanup_EVP_MD_CTX(EVP_MD_CTX** context) {
 	EVP_MD_CTX_free(*context);
 	*context = nullptr;
 }
@@ -3911,8 +3911,8 @@ void OutputFile::computeContentUUID(ld::Internal& state, uint8_t* wholeBuffer)
 			if ( log ) fprintf(stderr, "linkedit SegCmdOffset=0x%08llX, size=0x%08llX\n", symbolTableCmdOffset, symbolTableCmdSize);
 		}
 
-		[[gnu::cleanup(EVP_MD_cleanup)]] EVP_MD* sha256_digest = EVP_MD_fetch(nullptr, "SHA-256", nullptr);
-		[[gnu::cleanup(EVP_MD_CTX_cleanup)]] EVP_MD_CTX* context = EVP_MD_CTX_new();
+		[[gnu::cleanup(cleanup_EVP_MD)]] EVP_MD* sha256_digest = EVP_MD_fetch(nullptr, "SHA-256", nullptr);
+		[[gnu::cleanup(cleanup_EVP_MD_CTX)]] EVP_MD_CTX* context = EVP_MD_CTX_new();
 
 		if ( !EVP_DigestInit_ex2(context, sha256_digest, nullptr) ) {
 			ERR_print_errors_fp(stderr);
@@ -3961,8 +3961,8 @@ void OutputFile::computeContentUUID(ld::Internal& state, uint8_t* wholeBuffer)
 				uint64_t startOffset = regionsToMeasure[index].first;
 				uint64_t size = regionsToMeasure[index].second;
 
-				[[gnu::cleanup(EVP_MD_cleanup)]] EVP_MD* sha256_digest = EVP_MD_fetch(nullptr, "SHA-256", nullptr);
-				[[gnu::cleanup(EVP_MD_CTX_cleanup)]] EVP_MD_CTX* context = EVP_MD_CTX_new();
+				[[gnu::cleanup(cleanup_EVP_MD)]] EVP_MD* sha256_digest = EVP_MD_fetch(nullptr, "SHA-256", nullptr);
+				[[gnu::cleanup(cleanup_EVP_MD_CTX)]] EVP_MD_CTX* context = EVP_MD_CTX_new();
 
 				if (!EVP_DigestInit_ex2(context, sha256_digest, nullptr)) {
 					ERR_print_errors_fp(stderr);

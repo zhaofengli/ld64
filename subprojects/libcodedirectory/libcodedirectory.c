@@ -46,13 +46,13 @@
 #include <openssl/evp.h>
 
 static void
-EVP_MD_cleanup(EVP_MD** digest) {
+cleanup_EVP_MD(EVP_MD** digest) {
     EVP_MD_free(*digest);
     *digest = NULL;
 }
 
 static void
-EVP_MD_CTX_cleanup(EVP_MD_CTX** context) {
+cleanup_EVP_MD_CTX(EVP_MD_CTX** context) {
     EVP_MD_CTX_free(*context);
     *context = NULL;
 }
@@ -792,8 +792,8 @@ _libcd_hash_page(libcd *s,
     uint8_t page_hash[_max_known_hash_len] = {0};
     const unsigned int page_no = (unsigned int)page_idx;
 
-    [[gnu::cleanup(EVP_MD_cleanup)]] EVP_MD* digest = EVP_MD_fetch(NULL, hi->name, NULL);
-    [[gnu::cleanup(EVP_MD_CTX_cleanup)]] EVP_MD_CTX* context = EVP_MD_CTX_new();
+    [[gnu::cleanup(cleanup_EVP_MD)]] EVP_MD* digest = EVP_MD_fetch(NULL, hi->name, NULL);
+    [[gnu::cleanup(cleanup_EVP_MD_CTX)]] EVP_MD_CTX* context = EVP_MD_CTX_new();
 
     const size_t pos = page_idx * _cs_page_bytes;
     uint8_t page[_cs_page_bytes] = {0};
@@ -914,8 +914,8 @@ _libcd_serialize_cd (libcd *s, uint32_t hash_type)
     //// code directory hashes
     {
         if (s->special_slot_count > 0) {
-            [[gnu::cleanup(EVP_MD_cleanup)]] EVP_MD* digest = EVP_MD_fetch(NULL, hi->name, NULL);
-            [[gnu::cleanup(EVP_MD_CTX_cleanup)]] EVP_MD_CTX* context = EVP_MD_CTX_new();
+            [[gnu::cleanup(cleanup_EVP_MD)]] EVP_MD* digest = EVP_MD_fetch(NULL, hi->name, NULL);
+            [[gnu::cleanup(cleanup_EVP_MD_CTX)]] EVP_MD_CTX* context = EVP_MD_CTX_new();
 
             uint8_t *special_slot_buf = calloc(s->special_slot_count, hi->hash_len);
 
@@ -978,8 +978,8 @@ _libcd_serialize_cd (libcd *s, uint32_t hash_type)
 
     //Record the cdhash for this codedirectory
     {
-        [[gnu::cleanup(EVP_MD_cleanup)]] EVP_MD* digest = EVP_MD_fetch(NULL, hi->name, NULL);
-        [[gnu::cleanup(EVP_MD_CTX_cleanup)]] EVP_MD_CTX* context = EVP_MD_CTX_new();
+        [[gnu::cleanup(cleanup_EVP_MD)]] EVP_MD* digest = EVP_MD_fetch(NULL, hi->name, NULL);
+        [[gnu::cleanup(cleanup_EVP_MD_CTX)]] EVP_MD_CTX* context = EVP_MD_CTX_new();
 
         uint8_t *cdhash_buf = calloc(1, hi->hash_len);
         if (cdhash_buf == NULL) {
