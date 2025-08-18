@@ -31,6 +31,7 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include <algorithm>
 #include <vector>
 #include <set>
 #include <unordered_set>
