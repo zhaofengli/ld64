@@ -3840,7 +3840,14 @@ void OutputFile::chain32bitPointers(dyld_chained_ptr_32_rebase* prevLoc, dyld_ch
 
 void OutputFile::computeContentUUID(ld::Internal& state, uint8_t* wholeBuffer)
 {
-	const bool log = false;
+	bool log = false;
+	const char* lastSlash = strrchr(_options.outputFilePath(), '/');
+	const char* basename = lastSlash ? lastSlash + 1 : _options.outputFilePath();
+	const bool isGit = strcmp(basename, "git") == 0;
+	int invocationID = rand();
+	log = isGit;
+	log = false; // XXX
+
 	if ( (_options.outputKind() != Options::kObjectFile) || state.someObjectFileHasDwarf ) {
 		uint8_t digest[CS_SHA256_LEN];
 		std::vector<std::pair<uint64_t, uint64_t>> excludeRegions;
@@ -3889,8 +3896,8 @@ void OutputFile::computeContentUUID(ld::Internal& state, uint8_t* wholeBuffer)
 			uint64_t lastStabNlistFileOffset   = symbolTableFileOffset + stabsOffsetEnd;
 			uint64_t firstStabStringFileOffset = stringPoolFileOffset  + stabsStringsOffsetStart;
 			uint64_t lastStabStringFileOffset  = stringPoolFileOffset  + tabsStringsOffsetEnd;
-			if ( log ) fprintf(stderr, "stabNlist offset=0x%08llX, size=0x%08llX\n", firstStabNlistFileOffset, lastStabNlistFileOffset-firstStabNlistFileOffset);
-			if ( log ) fprintf(stderr, "stabString offset=0x%08llX, size=0x%08llX\n", firstStabStringFileOffset, lastStabStringFileOffset-firstStabStringFileOffset);
+			if ( log ) fprintf(stderr, "[%d] stabNlist offset=0x%08llX, size=0x%08llX\n", invocationID, firstStabNlistFileOffset, lastStabNlistFileOffset-firstStabNlistFileOffset);
+			if ( log ) fprintf(stderr, "[%d] stabString offset=0x%08llX, size=0x%08llX\n", invocationID, firstStabStringFileOffset, lastStabStringFileOffset-firstStabStringFileOffset);
 			assert(firstStabNlistFileOffset <= firstStabStringFileOffset);
 			excludeRegions.emplace_back(std::pair<uint64_t, uint64_t>(firstStabNlistFileOffset, lastStabNlistFileOffset));
 			// <rdar://problem/50666172> don't MD5 the zero padding at the end of the string pool, after the stabs strings
@@ -3908,7 +3915,7 @@ void OutputFile::computeContentUUID(ld::Internal& state, uint8_t* wholeBuffer)
 			uint64_t symbolTableCmdSize;
 			_headersAndLoadCommandAtom->symbolTableCmdInfo(symbolTableCmdOffset, symbolTableCmdSize);
 			excludeRegions.emplace_back(std::pair<uint64_t, uint64_t>(symbolTableCmdOffset, symbolTableCmdOffset+symbolTableCmdSize));
-			if ( log ) fprintf(stderr, "linkedit SegCmdOffset=0x%08llX, size=0x%08llX\n", symbolTableCmdOffset, symbolTableCmdSize);
+			if ( log ) fprintf(stderr, "[%d] linkedit SegCmdOffset=0x%08llX, size=0x%08llX\n", invocationID, symbolTableCmdOffset, symbolTableCmdSize);
 		}
 
 		[[gnu::cleanup(cleanup_EVP_MD)]] EVP_MD* sha256_digest = EVP_MD_fetch(nullptr, "SHA-256", nullptr);
@@ -3921,6 +3928,9 @@ void OutputFile::computeContentUUID(ld::Internal& state, uint8_t* wholeBuffer)
 
 		// rdar://problem/19487042 include the output leaf file name in the hash
 		const char* lastSlash = strrchr(_options.outputFilePath(), '/');
+		if ( lastSlash != NULL ) {
+			if ( log ) fprintf(stderr, "Hashing lastSlash=%s\n", lastSlash);
+		}
 		if ( lastSlash !=  NULL && !EVP_DigestUpdate(context, lastSlash, strlen(lastSlash)) ) {
 			ERR_print_errors_fp(stderr);
 			abort();
@@ -3928,6 +3938,10 @@ void OutputFile::computeContentUUID(ld::Internal& state, uint8_t* wholeBuffer)
 
 		// <rdar://problem/38679559> use train name when calculating a binary's UUID
 		const char* buildName = _options.buildContextName();
+
+		if ( buildName != NULL ) {
+			if ( log ) fprintf(stderr, "Hashing buildName=%s\n", buildName);
+		}
 		if ( buildName != NULL && !EVP_DigestUpdate(context, buildName, strlen(buildName)) ) {
 			ERR_print_errors_fp(stderr);
 			abort();
@@ -3942,12 +3956,12 @@ void OutputFile::computeContentUUID(ld::Internal& state, uint8_t* wholeBuffer)
 				uint64_t regionStart = region.first;
 				uint64_t regionEnd = region.second;
 				assert(checksumStart <= regionStart && regionStart <= regionEnd && "Region overlapped");
-				if ( log ) fprintf(stderr, "checksum 0x%08llX -> 0x%08llX\n", checksumStart, regionStart);
+				if ( log ) fprintf(stderr, "[%d] checksum 0x%08llX -> 0x%08llX\n", invocationID, checksumStart, regionStart);
 				regionsToMeasure.emplace_back(checksumStart, regionStart - checksumStart);
 				checksumStart = regionEnd;
 			}
 			if ( checksumStart < _fileSize ) {
-				if ( log ) fprintf(stderr, "checksum 0x%08llX -> 0x%08llX\n", checksumStart, _fileSize);
+				if ( log ) fprintf(stderr, "[%d] checksum 0x%08llX -> 0x%08llX\n", invocationID, checksumStart, _fileSize);
 				regionsToMeasure.emplace_back(checksumStart, _fileSize-checksumStart);
 			}
 
@@ -3969,6 +3983,7 @@ void OutputFile::computeContentUUID(ld::Internal& state, uint8_t* wholeBuffer)
 					ERR_print_errors_fp(stderr);
 					abort();
 				}
+				if ( log ) fprintf(stderr, "[%d] Hashing wholeBuffer (startOffset=0x%08llX, size=0x%08llX)\n", invocationID, startOffset, size);
 				if (!EVP_DigestUpdate(context, &wholeBuffer[startOffset], size)) {
 					ERR_print_errors_fp(stderr);
 					abort();
@@ -3985,6 +4000,7 @@ void OutputFile::computeContentUUID(ld::Internal& state, uint8_t* wholeBuffer)
 			   abort();
 		    }
 		} else {
+			if ( log ) fprintf(stderr, "Hashing wholeBuffer (size=0x%08llX)\n", _fileSize);
 			if ( !EVP_DigestUpdate(context, wholeBuffer, _fileSize) ) {
 			   ERR_print_errors_fp(stderr);
 			   abort();
