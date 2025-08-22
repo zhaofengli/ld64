@@ -19,7 +19,7 @@
 
 #define _libcd_err(msg, ...) _libcd_err_log("%s: " msg "\n", __func__, ##__VA_ARGS__)
 
-#define LIBCD_PARALLEL 1
+#define LIBCD_PARALLEL 0
 
 #if LIBCD_PARALLEL
 #include <dispatch/dispatch.h>
