@@ -3957,7 +3957,8 @@ void OutputFile::computeContentUUID(ld::Internal& state, uint8_t* wholeBuffer)
 				uint8_t digest[CS_SHA256_LEN];
 			};
 			__block std::vector<Digest> digests(regionsToMeasure.size());
-			dispatch_apply(regionsToMeasure.size(), DISPATCH_APPLY_AUTO, ^(size_t index) {
+			//dispatch_apply(regionsToMeasure.size(), DISPATCH_APPLY_AUTO, ^(size_t index) {
+			for (size_t index = 0; index < regionsToMeasure.size(); ++index) {
 				uint64_t startOffset = regionsToMeasure[index].first;
 				uint64_t size = regionsToMeasure[index].second;
 
@@ -3976,7 +3977,7 @@ void OutputFile::computeContentUUID(ld::Internal& state, uint8_t* wholeBuffer)
 					ERR_print_errors_fp(stderr);
 					abort();
 				}
-			});
+			}
 
 			// Merge the resuls in serial
 			if ( !EVP_DigestUpdate(context, digests.data(), digests.size() * sizeof(Digest)) ) {
