@@ -3276,10 +3276,10 @@ void OutputFile::writeAtoms(ld::Internal& state, uint8_t* wholeBuffer)
 			baseAddress = sect->address;
 	}
 	__block const char* exception = nullptr;
-	dispatch_apply(state.sections.size(), DISPATCH_APPLY_AUTO, ^(size_t index) {
+	for ( size_t index = 0; index < state.sections.size(); ++index ) {
 		ld::Internal::FinalSection* sect = state.sections[index];
 		if ( takesNoDiskSpace(sect) )
-			return;
+			continue;
 		const bool sectionUsesNops = (sect->type() == ld::Section::typeCode);
 		//fprintf(stderr, "file offset=0x%08llX, section %s, atomCount=%lu\n", sect->fileOffset, sect->sectionName(), sect->atoms.size());
 		bool 		lastAtomWasThumb 		  = false;
@@ -3311,7 +3311,7 @@ void OutputFile::writeAtoms(ld::Internal& state, uint8_t* wholeBuffer)
 					asprintf((char**)&exception, "%s in '%s'", msg, atom->name());
 			}
 		}
-	});
+	}
 	if ( exception != nullptr )
 		throw exception;
 
